@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Our Love Journey - Couple App</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Google Analytics (GA4) / Firebase Analytics Measurement Engine (Measurement ID: G-E5MVRCH1SW) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-E5MVRCH1SW"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){ dataLayer.push(arguments); }
+        window.gtag = gtag;
+        gtag('js', new Date());
+        gtag('config', 'G-E5MVRCH1SW', {
+            send_page_view: true
+        });
+
+        // Fail-safe global event logger defined immediately so no interaction can ever fail
+        window.logAppEvent = function(eventName, eventParams = {}) {
+            try {
+                if (typeof window.gtag === 'function') {
+                    window.gtag('event', eventName, eventParams);
+                }
+                if (window.firebaseAnalytics && typeof window.firebaseAnalytics.logEvent === 'function') {
+                    window.firebaseAnalytics.logEvent(eventName, eventParams);
+                }
+                console.log(`[Analytics Event] ${eventName}:`, eventParams);
+            } catch (err) {
+                console.warn("Analytics event notice:", err);
+            }
+        };
+    </script>
+
+    <!-- Firebase App, Analytics & Firestore SDK (CDN Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script>
+        // Official Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCzzPnwC8WatpACuM-UoWkB_ohvxp6ahqE",
+            authDomain: "love-journey-6f9e9.firebaseapp.com",
+            projectId: "love-journey-6f9e9",
+            storageBucket: "love-journey-6f9e9.firebasestorage.app",
+            messagingSenderId: "431042697547",
+            appId: "1:431042697547:web:91ad34bcca4638838e70ce",
+            measurementId: "G-E5MVRCH1SW"
+        };
+
+        try {
+            if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+                try {
+                    window.db = firebase.firestore();
+                    console.log("[Firebase] Firestore initialized successfully");
+                } catch (err) {
+                    console.warn("[Firebase] Firestore init notice:", err);
+                }
+                if (firebase.analytics && firebase.analytics.isSupported) {
+                    firebase.analytics.isSupported().then(supported => {
+                        if (supported) {
+                            window.firebaseAnalytics = firebase.analytics();
+                            console.log("[Firebase] Analytics initialized successfully with ID: G-E5MVRCH1SW");
+                            window.logAppEvent('app_open', { platform: 'web_app' });
+                        }
+                    }).catch(e => console.warn("[Firebase] isSupported check:", e));
+                }
+            }
+        } catch (e) {
+            console.warn("[Firebase] Initialization notice:", e);
+        }
+    </script>
+
+    <!-- Google Mobile Ads / AdSense SDK Script (App ID: ca-app-pub-6166507371875088~3485623826) -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6166507371875088"
+            crossorigin="anonymous"
+            onerror="console.info('AdMob script notice: Running with local presentation layer.')"></script>
+
+    <style>
+        :root {
+            --primary: #ff4b6e;
+            --primary-light: #ffe3e8;
+            --secondary: #ff758c;
+            --bg: #fff0f3;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --sub: #777777;
+            --border-color: #ffd1dc;
+            --nav-bg: #ffffff;
+            --shadow: 0 8px 24px rgba(255, 75, 110, 0.12);
+        }
+
+        body.dark {
+            --primary: #ff5e80;
+            --primary-light: #3d1a24;
+            --secondary: #ff859c;
+            --bg: #121212;
+            --card-bg: #1e1e1e;
+            --text: #f0f0f0;
+            --sub: #a0a0a0;
+            --border-color: #2e2e2e;
+            --nav-bg: #1e1e1e;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* App Container constrained to realistic mobile viewport */
+        .app-container {
+            width: 100%;
+            max-width: 440px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            /* Generous bottom padding so cards and buttons can be completely scrolled above banner and bottom nav */
+            padding: 16px 16px 135px 16px;
+        }
+
+        /* Top Header */
+        header {
+            text-align: center;
+            padding: 14px 0 10px 0;
+        }
+
+        header h1 {
+            color: var(--primary);
+            font-size: 22px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        header p {
+            color: var(--sub);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        /* Direct 1-Click APK Download Banner */
+        .apk-download-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #ff4b6e, #ff758c);
+            color: #ffffff;
+            padding: 12px 16px;
+            border-radius: 14px;
+            margin: 12px 0 16px 0;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(255, 75, 110, 0.35);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .apk-download-banner:active {
+            transform: scale(0.98);
+        }
+
+        .apk-download-icon {
+            font-size: 26px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .apk-download-info {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .apk-download-title {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            color: #ffffff;
+        }
+
+        .apk-download-sub {
+            font-size: 11px;
+            opacity: 0.92;
+            margin-top: 2px;
+            color: #ffffff;
+        }
+
+        .apk-download-btn-pill {
+            background: #ffffff;
+            color: #ff4b6e;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 7px 15px;
+            border-radius: 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+
+        /* Floating Hearts Animation */
+        .heart-float {
+            position: fixed;
+            color: var(--primary);
+            font-size: 22px;
+            animation: floatUp 3s ease-in forwards;
+            pointer-events: none;
+            z-index: 99999;
+            user-select: none;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) scale(0.8) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-240px) scale(1.4) rotate(25deg);
+                opacity: 0;
+            }
+        }
+
+        /* Content Tabs */
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Card Styles */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.25s ease;
+        }
+
+        /* Couple Display Card */
+        .couple-display {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 20px 10px;
+        }
+
+        .person {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.15s ease;
+            user-select: none;
+        }
+
+        .person:active {
+            transform: scale(0.96);
+        }
+
+        .avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            border: 3px solid var(--primary);
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            box-shadow: 0 4px 12px rgba(255, 75, 110, 0.2);
+            transition: transform 0.2s ease;
+        }
+
+        .person h3 {
+            font-size: 14px;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+        .heart-center {
+            font-size: 30px;
+            color: var(--primary);
+            animation: pulse 1.8s infinite;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.18); }
+            100% { transform: scale(1); }
+        }
+
+        /* Counter Card */
+        .counter-box {
+            text-align: center;
+            background: linear-gradient(135deg, var(--card-bg), var(--primary-light));
+        }
+
+        .counter-box h2 {
+            font-size: 13px;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .timer-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .time-part {
+            background: var(--card-bg);
+            padding: 10px 4px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+
+        .time-part .num {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+            display: block;
+        }
+
+        .time-part .label {
+            font-size: 10px;
+            color: var(--sub);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        /* Quote Card */
+        .quote-card {
+            text-align: center;
+            font-style: italic;
+            font-size: 13px;
+            color: var(--text);
+            cursor: pointer;
+            border-left: 4px solid var(--primary);
+            padding: 14px 16px;
+            user-select: none;
+            transition: transform 0.15s ease;
+        }
+
+        .quote-card:active {
+            transform: scale(0.98);
+        }
+
+        /* Milestones List */
+        .milestones-card h3 {
+            font-size: 15px;
+            margin-bottom: 12px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .milestone-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .milestone-item:last-child {
+            border-bottom: none;
+        }
+
+        .milestone-icon {
+            font-size: 22px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .milestone-info h4 {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .milestone-info p {
+            font-size: 11px;
+            color: var(--sub);
+        }
+
+        /* Profile Cards */
+        .profile-card {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .profile-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .profile-row .p-icon {
+            font-size: 20px;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .profile-row .p-details h4 {
+            font-size: 11px;
+            color: var(--sub);
+            text-transform: uppercase;
+        }
+
+        .profile-row .p-details p {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Vault / Memories */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 6px;
+        }
+
+        .folder {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px 12px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: transform 0.15s ease;
+            user-select: none;
+        }
+
+        .folder:active {
+            transform: scale(0.96);
+        }
+
+        .folder-icon {
+            font-size: 38px;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .folder h3 {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .folder p {
+            font-size: 11px;
+            color: var(--sub);
+        }
+
+        /* Settings Items */
+        .setting-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .setting-box h4 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+
+        .setting-label {
+            font-size: 12px;
+            color: var(--sub);
+            margin-bottom: 4px;
+            display: block;
+            font-weight: 500;
+        }
+
+        .setting-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            margin-bottom: 12px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .setting-input:focus {
+            border-color: var(--primary);
+        }
+
+        .setting-item {
+            background: var(--bg);
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            transition: opacity 0.2s ease, transform 0.1s ease;
+        }
+
+        .btn-save:active {
+            transform: scale(0.98);
+        }
+
+        /* Switch Toggle */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        /* ======================================================= */
+        /* GOOGLE ADMOB BANNER AD (Fixed Right Above Bottom Nav)   */
+        /* App ID: ca-app-pub-6166507371875088~3485623826         */
+        /* Banner Ad Unit ID: ca-app-pub-6166507371875088~9889496054 */
+        /* ======================================================= */
+        .admob-banner-container {
+            position: fixed;
+            bottom: 64px; /* Placed immediately above 64px bottom nav bar */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 440px;
+            height: 54px;
+            background: #ffffff;
+            border-top: 1px solid rgba(66, 133, 244, 0.3);
+            border-bottom: 1px solid rgba(66, 133, 244, 0.3);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+            overflow: hidden;
+            user-select: none;
+            transition: background-color 0.3s ease;
+        }
+
+        body.dark .admob-banner-container {
+            background: #1a1a1a;
+            border-color: #333333;
+            box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .admob-banner-creative {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            height: 100%;
+            padding: 0 12px;
+            cursor: pointer;
+        }
+
+        .admob-banner-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow: hidden;
+        }
+
+        .admob-badge {
+            background: #4285f4;
+            color: #ffffff;
+            font-size: 9.5px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            flex-shrink: 0;
+        }
+
+        .admob-info {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .admob-title {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .admob-unit-id {
+            font-size: 9.5px;
+            color: #4285f4;
+            font-family: monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .admob-cta-btn {
+            background: #34a853;
+            color: #ffffff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: transform 0.1s ease;
+        }
+
+        .admob-cta-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Bottom Navigation Bar */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 440px;
+            background: var(--nav-bg);
+            height: 64px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+            z-index: 10000;
+            padding: 0 4px;
+            border-top-left-radius: 18px;
+            border-top-right-radius: 18px;
+            user-select: none;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--sub);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 8px 14px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            outline: none;
+            flex: 1;
+        }
+
+        .nav-btn .icon {
+            font-size: 20px;
+            transition: transform 0.2s ease;
+        }
+
+        .nav-btn.active {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .nav-btn.active .icon {
+            transform: translateY(-2px) scale(1.1);
+        }
+
+        /* Toast feedback */
+        .toast {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-30px);
+            background: rgba(30, 30, 30, 0.94);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 12.5px;
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            z-index: 100001;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 90%;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* In-App Non-Blocking Modal Dialog */
+        .app-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(4px);
+            z-index: 100000;
+            display: none;
+            pointer-events: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .app-modal-overlay.show {
+            display: flex;
+            pointer-events: auto;
+            opacity: 1;
+        }
+
+        .app-modal-card {
+            background: var(--card-bg);
+            color: var(--text);
+            width: 100%;
+            max-width: 360px;
+            border-radius: 20px;
+            padding: 22px 18px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transform: scale(0.94);
+            transition: transform 0.2s ease;
+        }
+
+        .app-modal-overlay.show .app-modal-card {
+            transform: scale(1);
+        }
+
+        .app-modal-icon {
+            font-size: 40px;
+            margin-bottom: 8px;
+        }
+
+        .app-modal-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .app-modal-desc {
+            font-size: 13px;
+            color: var(--text);
+            line-height: 1.5;
+            margin-bottom: 18px;
+        }
+
+        .app-modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .app-modal-btn {
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.1s ease;
+        }
+
+        .app-modal-btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-modal-primary {
+            background: var(--primary);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-modal-secondary {
+            background: var(--bg);
+            color: var(--sub);
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast">Notification</div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header>
+            <h1 onclick="triggerHearts(event)">
+                <span>💖</span> Our Love Journey <span>💖</span>
+            </h1>
+            <p id="headerSubtitle">Sajal Das & Partner</p>
+        </header>
+
+        <!-- Direct 1-Click APK Download Action Banner -->
+        <a href="LoveJourney.apk" download="LoveJourney.apk" class="apk-download-banner" onclick="event.stopPropagation(); triggerHearts(event); showToast('Downloading Love Journey APK...');">
+            <div class="apk-download-icon">📲</div>
+            <div class="apk-download-info">
+                <span class="apk-download-title">Download Love Journey APK</span>
+                <span class="apk-download-sub">Direct 1-Click Install for Android (35 MB)</span>
+            </div>
+            <span class="apk-download-btn-pill">Download</span>
+        </a>
+
+        <!-- 1. HOME TAB -->
+        <div id="home" class="tab-content active">
+            <!-- Couple Profile Avatars -->
+            <div class="card couple-display">
+                <div class="person" onclick="switchTab('profile')">
+                    <div class="avatar" id="avatar1">🧑🏻</div>
+                    <h3 id="p1Name">Sajal Das</h3>
+                </div>
+
+                <div class="heart-center" onclick="triggerHearts(event)">❤️</div>
+
+                <div class="person" onclick="switchTab('profile')">
+                    <div class="avatar" id="avatar2">👩🏻</div>
+                    <h3 id="p2Name">Partner</h3>
+                </div>
+            </div>
+
+            <!-- Love Days Counter -->
+            <div class="card counter-box">
+                <h2>TOGETHER IN LOVE FOR</h2>
+                <div class="timer-grid">
+                    <div class="time-part"><span class="num" id="y">0</span><span class="label">Years</span></div>
+                    <div class="time-part"><span class="num" id="m">0</span><span class="label">Months</span></div>
+                    <div class="time-part"><span class="num" id="d">0</span><span class="label">Days</span></div>
+                    <div class="time-part"><span class="num" id="h">00</span><span class="label">Hours</span></div>
+                    <div class="time-part"><span class="num" id="min">00</span><span class="label">Mins</span></div>
+                    <div class="time-part"><span class="num" id="s">00</span><span class="label">Secs</span></div>
+                </div>
+            </div>
+
+            <!-- Daily Romantic Quote -->
+            <div class="card quote-card" onclick="nextQuote()">
+                <p id="quoteText">"In all the world, there is no heart for me like yours. In all the world, there is no love for you like mine."</p>
+                <small style="color: var(--primary); font-size: 11px; margin-top: 6px; display: inline-block;">Tap for next quote ✨</small>
+            </div>
+
+            <!-- Key Milestones -->
+            <div class="card milestones-card">
+                <h3><span>🏆</span> Relationship Milestones</h3>
+                <div class="milestone-item">
+                    <div class="milestone-icon">🌹</div>
+                    <div class="milestone-info">
+                        <h4>First Date</h4>
+                        <p>February 14, 2024 • The unforgettable evening</p>
+                    </div>
+                </div>
+                <div class="milestone-item">
+                    <div class="milestone-icon">💍</div>
+                    <div class="milestone-info">
+                        <h4>Proposed</h4>
+                        <p>August 20, 2024 • Said YES with happy tears</p>
+                    </div>
+                </div>
+                <div class="milestone-item">
+                    <div class="milestone-icon">🏖️</div>
+                    <div class="milestone-info">
+                        <h4>First Vacation</h4>
+                        <p>December 25, 2024 • Beach sunset trip</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. PROFILE TAB -->
+        <div id="profile" class="tab-content">
+            <div class="card profile-card">
+                <h3 style="color: var(--primary);">🧑🏻 Partner 1 Details</h3>
+                <div class="profile-row">
+                    <div class="p-icon">👤</div>
+                    <div class="p-details">
+                        <h4>Name</h4>
+                        <p id="profP1">Sajal Das</p>
+                    </div>
+                </div>
+                <div class="profile-row">
+                    <div class="p-icon">🎂</div>
+                    <div class="p-details">
+                        <h4>Birthday</h4>
+                        <p>12 October • Libra</p>
+                    </div>
+                </div>
+                <div class="profile-row">
+                    <div class="p-icon">📍</div>
+                    <div class="p-details">
+                        <h4>Location</h4>
+                        <p id="p1Addr">India</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card profile-card">
+                <h3 style="color: var(--primary);">👩🏻 Partner 2 Details</h3>
+                <div class="profile-row">
+                    <div class="p-icon">👤</div>
+                    <div class="p-details">
+                        <h4>Name</h4>
+                        <p id="profP2">Partner</p>
+                    </div>
+                </div>
+                <div class="profile-row">
+                    <div class="p-icon">🎂</div>
+                    <div class="p-details">
+                        <h4>Birthday</h4>
+                        <p>24 March • Aries</p>
+                    </div>
+                </div>
+                <div class="profile-row">
+                    <div class="p-icon">📍</div>
+                    <div class="p-details">
+                        <h4>Location</h4>
+                        <p id="p2Addr">India</p>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-save" type="button" onclick="switchTab('settings')">✏️ Edit Details in Settings</button>
+        </div>
+
+        <!-- 3. VAULT / MEMORIES TAB -->
+        <div id="memories" class="tab-content">
+            <h2 style="font-size: 18px; color: var(--primary); margin-bottom: 4px;">📸 Romantic Memory Vault</h2>
+            <p style="font-size: 12px; color: var(--sub); margin-bottom: 12px;">Explore your saved yearly chapters, letters, and snapshots.</p>
+
+            <div class="gallery-grid">
+                <div class="folder" onclick="openMemoryFolder('First Meet', '🌹')">
+                    <span class="folder-icon">🌹</span>
+                    <h3>First Meet</h3>
+                    <p>📂 Yearly Archive</p>
+                </div>
+                <div class="folder" onclick="openMemoryFolder('First Propose', '💍')">
+                    <span class="folder-icon">💍</span>
+                    <h3>Propose</h3>
+                    <p>📂 Yearly Archive</p>
+                </div>
+                <div class="folder" onclick="openMemoryFolder('Valentine', '💌')">
+                    <span class="folder-icon">💌</span>
+                    <h3>Valentine</h3>
+                    <p>📂 Yearly Archive</p>
+                </div>
+                <div class="folder" onclick="openMemoryFolder('Birthdays', '🎂')">
+                    <span class="folder-icon">🎂</span>
+                    <h3>Birthdays</h3>
+                    <p>📂 Yearly Archive</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. SETTINGS TAB -->
+        <div id="settings" class="tab-content">
+            <h2>⚙️ App Settings</h2>
+
+            <!-- Profile & Address Edit Box -->
+            <div class="setting-box">
+                <h4>Edit Profile Details</h4>
+                <label class="setting-label">Your Name:</label>
+                <input type="text" id="in1" class="setting-input" value="Sajal Das">
+                
+                <label class="setting-label">Partner Name:</label>
+                <input type="text" id="in2" class="setting-input" value="Partner">
+
+                <label class="setting-label">Address / Location:</label>
+                <input type="text" id="inAddr" class="setting-input" value="India">
+
+                <button class="btn-save" type="button" onclick="saveSettings()">Save Changes</button>
+            </div>
+
+            <!-- AdMob Live Banner Integration Card -->
+            <div class="setting-box" style="border: 1.5px solid #4285f4;">
+                <h4 style="color: #1a73e8; display: flex; align-items: center; justify-content: space-between;">
+                    <span>📱 Google AdMob Banner</span>
+                    <span style="font-size: 10px; background: #e8f0fe; color: #1967d2; padding: 2px 8px; border-radius: 4px; font-weight: 700;">ACTIVE</span>
+                </h4>
+                
+                <div style="font-size: 12px; margin-bottom: 8px; line-height: 1.6;">
+                    <strong>App ID:</strong><br>
+                    <code style="color: var(--primary); font-size: 11px;">ca-app-pub-6166507371875088~3485623826</code>
+                </div>
+
+                <div style="font-size: 12px; margin-bottom: 12px; line-height: 1.6;">
+                    <strong>Banner Ad Unit ID:</strong><br>
+                    <code style="color: var(--primary); font-size: 11px;">ca-app-pub-6166507371875088~9889496054</code><br>
+                    <small style="color: var(--sub);">Fixed cleanly above bottom navigation without overlapping any content.</small>
+                </div>
+
+                <button class="btn-save" style="background: #1a73e8;" type="button" onclick="handleBannerAdClick()">
+                    📢 Test Banner Ad Click Event
+                </button>
+            </div>
+
+            <!-- Android APK Download Box -->
+            <div class="setting-box" style="border: 1.5px solid #34a853;">
+                <h4 style="color: #34a853; display: flex; align-items: center; justify-content: space-between;">
+                    <span>📦 Android APK File</span>
+                    <span style="font-size: 10px; background: #e6f4ea; color: #137333; padding: 2px 8px; border-radius: 4px; font-weight: 700;">READY</span>
+                </h4>
+                <p style="font-size: 12px; color: var(--sub); margin-bottom: 10px;">
+                    Download <strong>LoveJourney.apk</strong> to install directly on your Android phone.
+                </p>
+                <a href="LoveJourney.apk" download="LoveJourney.apk" class="btn-save" style="background: #34a853; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; color: #ffffff;" onclick="showToast('Downloading Love Journey APK...');">
+                    ⬇️ Download LoveJourney.apk (1-Click)
+                </a>
+            </div>
+
+            <!-- Firebase Analytics Status -->
+            <div class="setting-item">
+                <span>📊 Firebase Analytics</span>
+                <strong style="color: #0f9d58; font-size: 11px;">G-E5MVRCH1SW (Active)</strong>
+            </div>
+
+            <!-- Notification System -->
+            <div class="setting-item">
+                <span>🔔 Notification System</span>
+                <label class="switch">
+                    <input type="checkbox" id="notifToggle" checked onchange="toggleNotif()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Dark Mode -->
+            <div class="setting-item">
+                <span>🌙 Dark Mode</span>
+                <label class="switch">
+                    <input type="checkbox" id="darkToggle" onchange="toggleDark()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Version -->
+            <div class="setting-item">
+                <span>📌 App Version</span>
+                <strong style="color: var(--primary);">v1.0.0</strong>
+            </div>
+
+            <!-- Log Out -->
+            <div class="setting-item" style="cursor: pointer; background: var(--primary-light);" onclick="logoutApp()">
+                <span style="color: var(--primary); font-weight: 600;">🚪 Log Out</span>
+                <span style="color: var(--primary);">&rarr;</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- GOOGLE ADMOB BANNER AD CONTAINER (Fixed Above Bottom Nav) -->
+    <!-- App ID: ca-app-pub-6166507371875088~3485623826         -->
+    <!-- Banner Unit ID: ca-app-pub-6166507371875088~9889496054 -->
+    <!-- ======================================================= -->
+    <div class="admob-banner-container" id="admobBannerContainer" onclick="handleBannerAdClick()">
+        <div class="admob-banner-creative">
+            <div class="admob-banner-left">
+                <span class="admob-badge">Ad</span>
+                <div class="admob-info">
+                    <span class="admob-title">Google AdMob Sponsored Banner</span>
+                    <span class="admob-unit-id">Unit: ca-app-pub-6166507371875088~9889496054</span>
+                </div>
+            </div>
+            <button class="admob-cta-btn" type="button" onclick="event.stopPropagation(); handleBannerAdClick();">Open</button>
+        </div>
+        <!-- Live AdMob / AdSense Ins Slot (Fills when live ads are served) -->
+        <ins class="adsbygoogle"
+             style="display:none;width:320px;height:50px;"
+             data-ad-client="ca-pub-6166507371875088"
+             data-ad-slot="9889496054"></ins>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" id="btn-nav-home" type="button" onclick="switchTab('home')">
+            <span class="icon">🏠</span>
+            <span>Home</span>
+        </button>
+        <button class="nav-btn" id="btn-nav-profile" type="button" onclick="switchTab('profile')">
+            <span class="icon">👤</span>
+            <span>Profile</span>
+        </button>
+        <button class="nav-btn" id="btn-nav-memories" type="button" onclick="switchTab('memories')">
+            <span class="icon">📸</span>
+            <span>Vault</span>
+        </button>
+        <button class="nav-btn" id="btn-nav-settings" type="button" onclick="switchTab('settings')">
+            <span class="icon">⚙️</span>
+            <span>Settings</span>
+        </button>
+    </nav>
+
+    <!-- In-App Dialog / Modal (Replaces browser blocking alerts) -->
+    <div class="app-modal-overlay" id="appModalOverlay" onclick="closeAppModal()">
+        <div class="app-modal-card" onclick="event.stopPropagation();">
+            <div class="app-modal-icon" id="modalIcon">🌸</div>
+            <h3 class="app-modal-title" id="modalTitle">Memory Vault</h3>
+            <p class="app-modal-desc" id="modalDesc">Details here...</p>
+            <div class="app-modal-buttons" id="modalButtons">
+                <button class="app-modal-btn btn-modal-primary" type="button" onclick="closeAppModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Controller JavaScript -->
+    <script>
+        // Couple Anniversary / Start Date (Valentine's Day 2024)
+        const START_DATE = new Date("2024-02-14T00:00:00");
+
+        // Real Google AdMob Configuration
+        const ADMOB_DATA = {
+            appId: "ca-app-pub-6166507371875088~3485623826",
+            bannerUnitId: "ca-app-pub-6166507371875088~9889496054"
+        };
+
+        // Try pushing to adsbygoogle safely
+        try {
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        } catch (adErr) {
+            console.info("adsbygoogle status:", adErr);
+        }
+
+        // Live Anniversary Counter
+        function updateTimer() {
+            try {
+                const now = new Date();
+                let diff = Math.floor((now - START_DATE) / 1000);
+                if (diff < 0) diff = 0;
+
+                const seconds = diff % 60;
+                const minutes = Math.floor(diff / 60) % 60;
+                const hours = Math.floor(diff / 3600) % 24;
+                
+                const daysTotal = Math.floor(diff / 86400);
+                const years = Math.floor(daysTotal / 365);
+                const months = Math.floor((daysTotal % 365) / 30);
+                const days = Math.floor((daysTotal % 365) % 30);
+
+                const elY = document.getElementById("y");
+                const elM = document.getElementById("m");
+                const elD = document.getElementById("d");
+                const elH = document.getElementById("h");
+                const elMin = document.getElementById("min");
+                const elS = document.getElementById("s");
+
+                if (elY) elY.textContent = years;
+                if (elM) elM.textContent = months;
+                if (elD) elD.textContent = days;
+                if (elH) elH.textContent = hours.toString().padStart(2, '0');
+                if (elMin) elMin.textContent = minutes.toString().padStart(2, '0');
+                if (elS) elS.textContent = seconds.toString().padStart(2, '0');
+            } catch (e) {
+                console.warn("Timer notice:", e);
+            }
+        }
+
+        setInterval(updateTimer, 1000);
+        updateTimer();
+
+        // Non-blocking Toast Feedback
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            if (!toast) return;
+            toast.textContent = message;
+            toast.classList.add("show");
+            setTimeout(() => {
+                toast.classList.remove("show");
+            }, 2600);
+        }
+
+        // Smooth Tab Switching without freezing
+        function switchTab(id) {
+            if (!id) return;
+
+            // 1. Remove active state from all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // 2. Remove active state from all nav buttons
+            const navBtns = document.querySelectorAll('.nav-btn');
+            navBtns.forEach(btn => btn.classList.remove('active'));
+
+            // 3. Activate target tab
+            const targetTab = document.getElementById(id);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+
+            // 4. Activate corresponding nav button
+            const activeNavBtn = document.getElementById(`btn-nav-${id}`);
+            if (activeNavBtn) {
+                activeNavBtn.classList.add('active');
+            }
+
+            // Smooth scroll to top of view
+            try {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (e) {
+                window.scrollTo(0, 0);
+            }
+
+            // 5. Track screen view in Firebase Analytics
+            window.logAppEvent('screen_view', {
+                firebase_screen: id,
+                firebase_screen_class: id.charAt(0).toUpperCase() + id.slice(1) + 'Tab'
+            });
+        }
+
+        // Banner Ad Click Handler
+        function handleBannerAdClick() {
+            window.logAppEvent('ad_click', {
+                ad_format: 'banner',
+                ad_unit_id: ADMOB_DATA.bannerUnitId,
+                ad_app_id: ADMOB_DATA.appId
+            });
+
+            showAppModal(
+                "📱",
+                "Google AdMob Banner",
+                `<strong>App ID:</strong><br><code style="font-size:11px;color:#1a73e8;">${ADMOB_DATA.appId}</code><br><br><strong>Banner Ad Unit ID:</strong><br><code style="font-size:11px;color:#1a73e8;">${ADMOB_DATA.bannerUnitId}</code><br><br>Ad impression and click event were logged to Firebase Analytics.`,
+                [{ text: "OK", primary: true, onClick: closeAppModal }]
+            );
+        }
+
+        // In-App Modal Dialog
+        function showAppModal(icon, title, descHtml, buttons) {
+            const overlay = document.getElementById('appModalOverlay');
+            const elIcon = document.getElementById('modalIcon');
+            const elTitle = document.getElementById('modalTitle');
+            const elDesc = document.getElementById('modalDesc');
+            const elButtons = document.getElementById('modalButtons');
+            if (!overlay || !elTitle || !elDesc || !elButtons) return;
+
+            if (elIcon) elIcon.textContent = icon || "❤️";
+            elTitle.textContent = title || "Notice";
+            elDesc.innerHTML = descHtml || "";
+
+            elButtons.innerHTML = "";
+            (buttons || [{ text: "Close", primary: true, onClick: closeAppModal }]).forEach(btnDef => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `app-modal-btn ${btnDef.primary ? 'btn-modal-primary' : 'btn-modal-secondary'}`;
+                btn.textContent = btnDef.text;
+                btn.onclick = () => {
+                    if (typeof btnDef.onClick === 'function') {
+                        btnDef.onClick();
+                    } else {
+                        closeAppModal();
+                    }
+                };
+                elButtons.appendChild(btn);
+            });
+
+            overlay.classList.add('show');
+        }
+
+        function closeAppModal() {
+            const overlay = document.getElementById('appModalOverlay');
+            if (overlay) overlay.classList.remove('show');
+        }
+
+        // Romantic Quotes Rotation
+        const quotes = [
+            "In all the world, there is no heart for me like yours. In all the world, there is no love for you like mine.",
+            "I love you not only for what you are, but for what I am when I am with you.",
+            "You are my today and all of my tomorrows.",
+            "Whatever our souls are made of, yours and mine are the same.",
+            "Every love story is beautiful, but ours is my favorite."
+        ];
+        let quoteIndex = 0;
+
+        function nextQuote() {
+            quoteIndex = (quoteIndex + 1) % quotes.length;
+            const quoteEl = document.getElementById('quoteText');
+            if (quoteEl) {
+                quoteEl.style.opacity = "0";
+                setTimeout(() => {
+                    quoteEl.textContent = `"${quotes[quoteIndex]}"`;
+                    quoteEl.style.opacity = "1";
+                }, 120);
+            }
+            triggerHearts();
+        }
+
+        // Floating Hearts Effect
+        function triggerHearts(e) {
+            const count = 6;
+            for (let i = 0; i < count; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'heart-float';
+                heart.textContent = ['❤️', '💖', '💕', '🌸', '✨', '💍'][Math.floor(Math.random() * 6)];
+                
+                let startX = window.innerWidth / 2;
+                let startY = window.innerHeight * 0.7;
+
+                if (e && e.clientX) {
+                    startX = e.clientX;
+                    startY = e.clientY;
+                }
+
+                heart.style.left = `${startX + (Math.random() * 80 - 40)}px`;
+                heart.style.top = `${startY + (Math.random() * 40 - 20)}px`;
+                heart.style.fontSize = `${18 + Math.random() * 16}px`;
+
+                document.body.appendChild(heart);
+                setTimeout(() => heart.remove(), 3000);
+            }
+            window.logAppEvent('heart_tap');
+        }
+
+        // Memory Vault Folder Viewer
+        function openMemoryFolder(folderName, emoji) {
+            let details = `Opened the <strong>${folderName}</strong> memory capsule.`;
+            if (folderName === 'First Meet') {
+                details = "🌹 <strong>February 14, 2024</strong><br>Our first meeting at the cozy cafe. Nervous smiles, warm coffee, and hours of talking that felt like minutes.";
+            } else if (folderName === 'First Propose') {
+                details = "💍 <strong>August 20, 2024</strong><br>Under the starlit sky, with the ring and beating hearts. A promise of forever with tears of joy!";
+            } else if (folderName === 'Valentine') {
+                details = "💌 <strong>Valentine's Keepsake</strong><br>Handwritten letters, dried flowers, and sweet surprises tucked away with infinite affection.";
+            } else if (folderName === 'Birthdays') {
+                details = "🎂 <strong>Celebration Archives</strong><br>Candles, midnight wishes, and shared cakes celebrating another year growing together.";
+            }
+
+            window.logAppEvent('view_item', {
+                item_category: 'memory_vault',
+                item_name: folderName
+            });
+
+            showAppModal(
+                emoji || "📂",
+                folderName + " Archive",
+                details + "<br><br><small style='color:var(--primary); font-weight:600;'>📁 12 Photos & 4 Keepsake Notes Saved</small>",
+                [{ text: "Close Archive", primary: true, onClick: closeAppModal }]
+            );
+        }
+
+        // Save Profile & Address Settings (Local + Cloud Firestore Sync)
+        function saveSettings() {
+            const n1 = (document.getElementById('in1')?.value || "Sajal Das").trim();
+            const n2 = (document.getElementById('in2')?.value || "Partner").trim();
+            const addr = (document.getElementById('inAddr')?.value || "India").trim();
+
+            const p1Name = document.getElementById('p1Name');
+            const p2Name = document.getElementById('p2Name');
+            const p1Addr = document.getElementById('p1Addr');
+            const p2Addr = document.getElementById('p2Addr');
+            const profP1 = document.getElementById('profP1');
+            const profP2 = document.getElementById('profP2');
+            const subtitle = document.getElementById('headerSubtitle');
+
+            if (p1Name) p1Name.textContent = n1;
+            if (p2Name) p2Name.textContent = n2;
+            if (profP1) profP1.textContent = n1;
+            if (profP2) profP2.textContent = n2;
+            if (p1Addr) p1Addr.textContent = addr;
+            if (p2Addr) p2Addr.textContent = addr;
+            if (subtitle) subtitle.textContent = `${n1} & ${n2}`;
+
+            // Save to LocalStorage immediately
+            try {
+                localStorage.setItem('lj_p1', n1);
+                localStorage.setItem('lj_p2', n2);
+                localStorage.setItem('lj_addr', addr);
+            } catch (e) {}
+
+            // Sync with Cloud Firestore
+            if (window.db) {
+                window.db.collection("coupleData").doc("settings").set({
+                    p1: n1,
+                    p2: n2,
+                    address: addr,
+                    updatedAt: new Date().toISOString()
+                }).then(() => {
+                    console.log("[Firebase Firestore] Profile settings synced to cloud");
+                }).catch((error) => {
+                    console.warn("[Firebase Firestore] Cloud sync notice:", error);
+                });
+            }
+
+            showToast("Settings saved & synced! 💖");
+
+            window.logAppEvent('update_profile', {
+                user_name: n1,
+                partner_name: n2,
+                location: addr
+            });
+        }
+
+        // Load Saved Settings on Startup (Firestore with LocalStorage Fallback)
+        function loadSettings() {
+            if (window.db) {
+                window.db.collection("coupleData").doc("settings").get().then((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        const n1 = data.p1 || "Sajal Das";
+                        const n2 = data.p2 || "Partner";
+                        const addr = data.address || "India";
+
+                        const in1 = document.getElementById('in1');
+                        const in2 = document.getElementById('in2');
+                        const inAddr = document.getElementById('inAddr');
+                        if (in1) in1.value = n1;
+                        if (in2) in2.value = n2;
+                        if (inAddr) inAddr.value = addr;
+
+                        const p1Name = document.getElementById('p1Name');
+                        const p2Name = document.getElementById('p2Name');
+                        const p1Addr = document.getElementById('p1Addr');
+                        const p2Addr = document.getElementById('p2Addr');
+                        const profP1 = document.getElementById('profP1');
+                        const profP2 = document.getElementById('profP2');
+                        const subtitle = document.getElementById('headerSubtitle');
+
+                        if (p1Name) p1Name.textContent = n1;
+                        if (p2Name) p2Name.textContent = n2;
+                        if (profP1) profP1.textContent = n1;
+                        if (profP2) profP2.textContent = n2;
+                        if (p1Addr) p1Addr.textContent = addr;
+                        if (p2Addr) p2Addr.textContent = addr;
+                        if (subtitle) subtitle.textContent = `${n1} & ${n2}`;
+
+                        try {
+                            localStorage.setItem('lj_p1', n1);
+                            localStorage.setItem('lj_p2', n2);
+                            localStorage.setItem('lj_addr', addr);
+                        } catch (e) {}
+                    } else {
+                        fallbackLoadSettings();
+                    }
+                }).catch((error) => {
+                    console.warn("Firestore settings load notice:", error);
+                    fallbackLoadSettings();
+                });
+            } else {
+                fallbackLoadSettings();
+            }
+        }
+
+        function fallbackLoadSettings() {
+            try {
+                const s1 = localStorage.getItem('lj_p1');
+                const s2 = localStorage.getItem('lj_p2');
+                const sAddr = localStorage.getItem('lj_addr');
+
+                if (s1 && document.getElementById('in1')) document.getElementById('in1').value = s1;
+                if (s2 && document.getElementById('in2')) document.getElementById('in2').value = s2;
+                if (sAddr && document.getElementById('inAddr')) document.getElementById('inAddr').value = sAddr;
+
+                if (s1 || s2 || sAddr) {
+                    const n1 = s1 || "Sajal Das";
+                    const n2 = s2 || "Partner";
+                    const addr = sAddr || "India";
+
+                    const p1Name = document.getElementById('p1Name');
+                    const p2Name = document.getElementById('p2Name');
+                    const profP1 = document.getElementById('profP1');
+                    const profP2 = document.getElementById('profP2');
+                    const p1Addr = document.getElementById('p1Addr');
+                    const p2Addr = document.getElementById('p2Addr');
+                    const subtitle = document.getElementById('headerSubtitle');
+
+                    if (p1Name) p1Name.textContent = n1;
+                    if (p2Name) p2Name.textContent = n2;
+                    if (profP1) profP1.textContent = n1;
+                    if (profP2) profP2.textContent = n2;
+                    if (p1Addr) p1Addr.textContent = addr;
+                    if (p2Addr) p2Addr.textContent = addr;
+                    if (subtitle) subtitle.textContent = `${n1} & ${n2}`;
+                }
+            } catch (e) {}
+        }      
+        // Toggle Notifications
+        function toggleNotif() {
+            const toggle = document.getElementById('notifToggle');
+            const status = toggle ? toggle.checked : true;
+            showToast(status ? "Notifications Enabled! 🔔" : "Notifications Disabled! 🔕");
+
+            window.logAppEvent('toggle_notifications', { enabled: status });
+        }
+
+        // Toggle Dark Mode
+        function toggleDark() {
+            const isDark = document.body.classList.toggle('dark');
+            showToast(isDark ? "Dark Mode Activated 🌙" : "Light Mode Activated ☀️");
+
+            window.logAppEvent('toggle_theme', { theme: isDark ? 'dark' : 'light' });
+        }
+
+        // Safe Logout Modal
+        function logoutApp() {
+            showAppModal(
+                "🚪",
+                "Log Out",
+                "Are you sure you want to log out of Our Love Journey?",
+                [
+                    { text: "Cancel", primary: false, onClick: closeAppModal },
+                    { 
+                        text: "Log Out", 
+                        primary: true, 
+                        onClick: () => {
+                            closeAppModal();
+                            showToast("Logged out successfully.");
+                            window.logAppEvent('user_logout');
+                        } 
+                    }
+                ]
+            );
+        }
+
+        // ESC key closes modals
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeAppModal();
+            }
+        });
+
+        // Initialize on DOM load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+        });
+
+        // Expose all functions to window for zero-failure onclick handlers
+        window.switchTab = switchTab;
+        window.saveSettings = saveSettings;
+        window.toggleNotif = toggleNotif;
+        window.toggleDark = toggleDark;
+        window.openMemoryFolder = openMemoryFolder;
+        window.logoutApp = logoutApp;
+        window.handleBannerAdClick = handleBannerAdClick;
+        window.showAppModal = showAppModal;
+        window.closeAppModal = closeAppModal;
+        window.nextQuote = nextQuote;
+        window.triggerHearts = triggerHearts;
+    </script>
+</body>
+</html>
